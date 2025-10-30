@@ -19,6 +19,7 @@ namespace SneakyGame.Game
         private int zombiesAlive = 0;
         private bool roundActive = false;
         private float spawnTimer = 0f;
+        private bool gameOver = false;
 
         private void Awake() => Instance = this;
 
@@ -106,6 +107,64 @@ namespace SneakyGame.Game
         private void ShowRoundStartClientRpc(int round)
         {
             Debug.Log($"<color=yellow>ROUND {round}</color>");
+        }
+
+        public void OnPlayerDied()
+        {
+            if (!IsServer || gameOver) return;
+
+            // Check if all players are dead
+            if (AreAllPlayersDead())
+            {
+                TriggerGameOver();
+            }
+        }
+
+        private bool AreAllPlayersDead()
+        {
+            // Find all PlayerState components in the scene
+            PlayerState[] allPlayers = FindObjectsByType<PlayerState>(FindObjectsSortMode.None);
+
+            if (allPlayers.Length == 0)
+            {
+                Debug.LogWarning("No players found in scene!");
+                return false;
+            }
+
+            // Check if ALL players are dead
+            foreach (PlayerState player in allPlayers)
+            {
+                if (!player.IsDead())
+                {
+                    return false; // At least one player is still alive
+                }
+            }
+
+            // All players are dead
+            return true;
+        }
+
+        private void TriggerGameOver()
+        {
+            gameOver = true;
+            roundActive = false;
+            Debug.Log($"<color=red>TEAM WIPE! All players dead on Round {CurrentRound.Value}. GAME OVER!</color>");
+
+            // Notify all clients to show game over screen
+            ShowGameOverClientRpc(CurrentRound.Value);
+        }
+
+        [ClientRpc]
+        private void ShowGameOverClientRpc(int finalRound)
+        {
+            if (UI.GameOverUI.Instance != null)
+            {
+                UI.GameOverUI.Instance.ShowGameOver(finalRound);
+            }
+            else
+            {
+                Debug.LogError("GameOverUI.Instance is null! Make sure GameOverUI exists in the scene.");
+            }
         }
     }
 }

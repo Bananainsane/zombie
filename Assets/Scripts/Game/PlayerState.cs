@@ -65,11 +65,20 @@ namespace SneakyGame.Game
                 movement.enabled = false;
             }
 
+            // Disable weapon shooting
+            if (TryGetComponent<Player.WeaponController>(out var weapon))
+            {
+                weapon.enabled = false;
+            }
+
             // Notify clients
             DieClientRpc();
 
-            // Respawn after delay
-            Invoke(nameof(Respawn), respawnDelay);
+            // Notify RoundManager of player death for team wipe check
+            if (RoundManager.Instance != null)
+            {
+                RoundManager.Instance.OnPlayerDied();
+            }
         }
 
         [ClientRpc]
