@@ -1,0 +1,384 @@
+================================================================================
+MULTIPLAYER LOBBY SYSTEM - UI TEMPLATE
+================================================================================
+
+This is a text-based visual guide for setting up the UI in Unity Editor.
+
+================================================================================
+MAIN PANEL LAYOUT
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                        MULTIPLAYER                              │
+│                                                                 │
+│                                                                 │
+│              ┌───────────────────────────┐                      │
+│              │   CREATE GAME             │                      │
+│              └───────────────────────────┘                      │
+│                                                                 │
+│              ┌───────────────────────────┐                      │
+│              │   BROWSE GAMES            │                      │
+│              └───────────────────────────┘                      │
+│                                                                 │
+│              ┌───────────────────────────┐                      │
+│              │   QUICK JOIN              │                      │
+│              └───────────────────────────┘                      │
+│                                                                 │
+│                                                                 │
+│                      [← Back to Menu]                           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Components:
+- Title: Font Size 48, Bold, Center Aligned
+- Buttons: Width 400px, Height 60px, Rounded corners
+- Spacing: 20px between buttons
+- Back Button: Bottom-left, smaller (30px height)
+
+================================================================================
+CREATE GAME PANEL LAYOUT
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                      CREATE GAME                                │
+│                                                                 │
+│                                                                 │
+│    Host Name:                                                   │
+│    ┌─────────────────────────────────────────────────┐         │
+│    │ Player_1234                                     │         │
+│    └─────────────────────────────────────────────────┘         │
+│                                                                 │
+│    Max Players:                                                 │
+│    ┌─────────────────────────────────────────────────┐         │
+│    │ 12                                              │         │
+│    └─────────────────────────────────────────────────┘         │
+│                                                                 │
+│                                                                 │
+│         ┌──────────────┐        ┌──────────────┐               │
+│         │ CREATE GAME  │        │   CANCEL     │               │
+│         └──────────────┘        └──────────────┘               │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Components:
+- Labels: Font Size 24, Left Aligned
+- Input Fields: Height 50px, Placeholder text
+- Buttons: Width 200px, Height 60px
+- Input validation: Max players 2-32
+
+================================================================================
+BROWSE GAMES PANEL LAYOUT
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                    AVAILABLE GAMES                              │
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │                                                           │ │
+│  │  ┌─────────────────────────────────────────────────────┐ │ │
+│  │  │ ● My Game          [3/12 Players]    Waiting  [JOIN]│ │ │
+│  │  └─────────────────────────────────────────────────────┘ │ │
+│  │                                                           │ │
+│  │  ┌─────────────────────────────────────────────────────┐ │ │
+│  │  │ ● Zombie Hunt      [6/12 Players]    Waiting  [JOIN]│ │ │
+│  │  └─────────────────────────────────────────────────────┘ │ │
+│  │                                                           │ │
+│  │  ┌─────────────────────────────────────────────────────┐ │ │
+│  │  │ ● Pro Game         [12/12 Players]   Full     [---] │ │ │
+│  │  └─────────────────────────────────────────────────────┘ │ │
+│  │                                                           │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│         ┌──────────────┐                ┌──────────────┐       │
+│         │   REFRESH    │                │     BACK     │       │
+│         └──────────────┘                └──────────────┘       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Components:
+- ScrollView: Vertical scrolling, flexible height
+- Lobby Items: Height 80px, with horizontal layout
+- Status Indicator: Circle, 16px diameter
+- Player Count: Badge style, center
+- Join Button: 80px width, right aligned
+
+When no games:
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                    AVAILABLE GAMES                              │
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │                                                           │ │
+│  │                                                           │ │
+│  │              No games available                           │ │
+│  │              Click Refresh to search again                │ │
+│  │                                                           │ │
+│  │                                                           │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│         ┌──────────────┐                ┌──────────────┐       │
+│         │   REFRESH    │                │     BACK     │       │
+│         └──────────────┘                └──────────────┘       │
+└─────────────────────────────────────────────────────────────────┘
+
+================================================================================
+LOBBY LIST ITEM (PREFAB)
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│ ● HostName123        [3/12]        Waiting           [JOIN]    │
+└─────────────────────────────────────────────────────────────────┘
+
+Layout (Horizontal):
+┌──┬─────────────────┬─────────┬──────────┬──────────┐
+│● │ HostName123     │ [3/12]  │ Waiting  │  [JOIN]  │
+└──┴─────────────────┴─────────┴──────────┴──────────┘
+ 16px    Flexible      100px     100px      80px
+
+Status Colors:
+● Green  = Waiting (can join)
+● Orange = In Progress
+● Red    = Full (can't join)
+
+================================================================================
+STATUS PANEL (OVERLAY)
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                                                                 │
+│              ┌───────────────────────────────┐                  │
+│              │                               │                  │
+│              │   [⟳]  Searching for games... │                  │
+│              │                               │                  │
+│              └───────────────────────────────┘                  │
+│                                                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Center of screen, semi-transparent background
+- Loading spinner: Rotates continuously
+- Status text: Updates based on connection state
+
+Status Messages:
+- "Searching for games..."
+- "Creating game..."
+- "Joining [hostname]..."
+- "Connecting..."
+- "Connected!"
+- "Connection Failed"
+
+================================================================================
+CONNECTION FEEDBACK (Toast Notifications)
+================================================================================
+
+Success (Bottom center, auto-dismiss):
+┌─────────────────────────────────┐
+│  ✓  Game created successfully!  │
+└─────────────────────────────────┘
+
+Error (Bottom center, auto-dismiss):
+┌─────────────────────────────────┐
+│  ✗  Connection failed           │
+└─────────────────────────────────┘
+
+- Duration: 2 seconds
+- Slide up animation
+- Green background for success
+- Red background for error
+
+================================================================================
+UNITY EDITOR SETUP STEPS
+================================================================================
+
+1. CREATE CANVAS
+   - GameObject → UI → Canvas
+   - Canvas Scaler: Scale With Screen Size
+   - Reference Resolution: 1920x1080
+
+2. CREATE MAIN CONTAINER
+   - Right-click Canvas → Create Empty
+   - Name: "MultiplayerMenu"
+   - Add MultiplayerMenuUI.cs script
+   - RectTransform: Stretch to fill
+
+3. CREATE PANELS (One at a time)
+   a) MainPanel
+      - Right-click MultiplayerMenu → UI → Panel
+      - Set anchor to stretch
+      - Set active: TRUE
+
+   b) CreateGamePanel
+      - Same as above
+      - Set active: FALSE
+
+   c) BrowseGamesPanel
+      - Same as above
+      - Set active: FALSE
+
+   d) StatusPanel
+      - Same as above
+      - Set active: FALSE
+      - Make background semi-transparent
+
+4. ADD BUTTONS
+   - Right-click Panel → UI → Button - TextMeshPro
+   - Set text, font size, colors
+   - Add to Button's OnClick() in MultiplayerMenuUI script
+
+5. ADD INPUT FIELDS
+   - Right-click Panel → UI → InputField - TextMeshPro
+   - Set placeholder text
+   - Configure character limit
+
+6. ADD TEXT ELEMENTS
+   - Right-click Panel → UI → Text - TextMeshPro
+   - Set font size, alignment, color
+
+7. CREATE SCROLL VIEW
+   - Right-click BrowseGamesPanel → UI → Scroll View
+   - Delete Horizontal Scrollbar
+   - Add Vertical Layout Group to Content
+   - Child Force Expand: Width=ON, Height=OFF
+   - Spacing: 10
+
+8. CREATE LOBBY LIST ITEM PREFAB
+   - Create from hierarchy template
+   - Add LobbyListItem.cs script
+   - Wire up all references
+   - Drag to Prefabs folder
+   - Delete from hierarchy
+
+9. WIRE REFERENCES
+   - Select MultiplayerMenu GameObject
+   - Drag all panels to their fields
+   - Drag all buttons to their fields
+   - Drag input fields
+   - Drag LobbyListItem prefab
+   - Drag Content transform from ScrollView
+
+10. TEST
+    - Press Play
+    - Click through each panel
+    - Check Console for errors
+
+================================================================================
+RECOMMENDED FONTS
+================================================================================
+
+Primary Font:
+- Roboto or Open Sans (Modern, clean)
+- Title: 48pt Bold
+- Buttons: 24pt Medium
+- Body: 18pt Regular
+
+Monospace Font (for player count):
+- Roboto Mono or Consolas
+- Size: 20pt
+
+================================================================================
+COLOR SCHEME (HEX VALUES)
+================================================================================
+
+Background:
+- Main BG: #1A1A2E
+- Panel BG: #16213E
+- Input BG: #0F1419
+
+Buttons:
+- Normal: #0F4C75
+- Hover: #3282B8
+- Pressed: #0A3154
+- Disabled: #2C3E50
+
+Text:
+- Primary: #ECF0F1
+- Secondary: #BDC3C7
+- Disabled: #7F8C8D
+
+Status:
+- Success/Green: #2ECC71
+- Warning/Orange: #F39C12
+- Error/Red: #E74C3C
+- Info/Blue: #3498DB
+
+================================================================================
+LAYOUT SETTINGS
+================================================================================
+
+Canvas Scaler:
+- UI Scale Mode: Scale With Screen Size
+- Reference Resolution: 1920 x 1080
+- Match: 0.5 (balance width/height)
+
+Spacing:
+- Large: 40px (between sections)
+- Medium: 20px (between buttons)
+- Small: 10px (within groups)
+
+Padding:
+- Panels: 40px all sides
+- Buttons: 20px horizontal, 10px vertical
+- Input Fields: 15px horizontal
+
+Corners:
+- Buttons: 8-12px radius
+- Panels: 4-8px radius
+- Input Fields: 6px radius
+
+================================================================================
+ANIMATION RECOMMENDATIONS
+================================================================================
+
+Panel Transitions:
+- Fade: 0.2s
+- Slide: 0.3s with ease-out
+
+Button Hover:
+- Scale: 1.0 → 1.05 (0.1s)
+- Color: Darken 10%
+
+Loading Spinner:
+- Rotation: 360° per second
+- Continuous
+
+Lobby List Items:
+- Appear: Fade in 0.2s
+- Stagger: 0.05s delay each
+
+Toast Notifications:
+- Slide up: 0.3s ease-out
+- Hold: 2s
+- Fade out: 0.3s
+
+================================================================================
+ACCESSIBILITY NOTES
+================================================================================
+
+- All buttons have clear labels
+- Status indicators use color + text
+- Keyboard navigation supported
+- Screen reader compatible
+- High contrast mode available
+- Font sizes readable (minimum 16px)
+
+================================================================================
+RESPONSIVE DESIGN
+================================================================================
+
+Breakpoints:
+- 1920x1080: Full layout
+- 1280x720: Scale down
+- 960x540: Stack vertically
+- Mobile: Portrait mode, larger buttons
+
+Adjustments:
+- Maintain 40px minimum touch targets
+- Scale fonts proportionally
+- Preserve readability
+- Test on various aspect ratios
+
+================================================================================
