@@ -162,6 +162,7 @@ namespace SneakyGame.AI
 
                 // Choose between flanking or direct pursuit
                 float distance = Vector3.Distance(transform.position, detected.position);
+                // 70% chance to flank, 30% chance to pursue when closer than 5 units
                 if (distance > 5f && Random.value > 0.7f)
                 {
                     agent.SetDestination(flankPosition);
