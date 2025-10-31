@@ -146,8 +146,51 @@ namespace SneakyGame.AI
         // Chase player with flanking tactics; return to search if target lost
         private void ChasingBehavior(Transform detected)
         {
-            if (detected != null) { targetPlayer = detected; lastKnownPlayerPosition = detected.position; flankTimer -= Time.deltaTime; if (flankTimer <= 0f) { CalculateFlankPosition(detected.position); flankTimer = flankUpdateInterval; } float distance = Vector3.Distance(transform.position, detected.position); if (distance > 5f && Random.value > 0.7f) agent.SetDestination(flankPosition); else agent.SetDestination(PredictPlayerPosition(detected)); }
-            else { float distance = Vector3.Distance(transform.position, lastKnownPlayerPosition); if (distance > loseTargetRadius) { currentState = ZombieState.Searching; targetPlayer = null; PickNewSearchPosition(); UpdateSpeed(); Debug.Log($"{name} lost player completely. Returning to SEARCH mode"); } else agent.SetDestination(lastKnownPlayerPosition); }
+            if (detected != null)
+            {
+                // Update tracking
+                targetPlayer = detected;
+                lastKnownPlayerPosition = detected.position;
+
+                // Update flanking position periodically
+                flankTimer -= Time.deltaTime;
+                if (flankTimer <= 0f)
+                {
+                    CalculateFlankPosition(detected.position);
+                    flankTimer = flankUpdateInterval;
+                }
+
+                // Choose between flanking or direct pursuit
+                float distance = Vector3.Distance(transform.position, detected.position);
+                if (distance > 5f && Random.value > 0.7f)
+                {
+                    agent.SetDestination(flankPosition);
+                }
+                else
+                {
+                    agent.SetDestination(PredictPlayerPosition(detected));
+                }
+            }
+            else
+            {
+                // Player not currently visible
+                float distance = Vector3.Distance(transform.position, lastKnownPlayerPosition);
+
+                if (distance > loseTargetRadius)
+                {
+                    // Too far from last known position - give up chase
+                    currentState = ZombieState.Searching;
+                    targetPlayer = null;
+                    PickNewSearchPosition();
+                    UpdateSpeed();
+                    Debug.Log($"{name} lost player completely. Returning to SEARCH mode");
+                }
+                else
+                {
+                    // Still close enough - investigate last known position
+                    agent.SetDestination(lastKnownPlayerPosition);
+                }
+            }
         }
 
         // Distribute zombies in sectors to cover more area during search
