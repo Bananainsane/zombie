@@ -48,8 +48,10 @@ namespace SneakyGame.AI
         private bool hasSeenPlayerBefore = false;
         private static System.Collections.Generic.List<ZombieAI> allZombies = new System.Collections.Generic.List<ZombieAI>();
 
+        // Initialize NavMeshAgent reference
         private void Awake() { agent = GetComponent<NavMeshAgent>(); }
 
+        // Setup zombie when spawned on network (server initializes state, all clients setup audio)
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
@@ -57,6 +59,7 @@ namespace SneakyGame.AI
             SetupAudio();
         }
 
+        // Randomize zombie appearance with scale variation
         private void RandomizeZombieSkin()
         {
             if (bodyRenderer == null) return;
@@ -65,6 +68,7 @@ namespace SneakyGame.AI
             if (bodyRenderer.material != null) Debug.Log($"{name} using original model materials");
         }
 
+        // Load random groan audio clip or generate fallback
         private void SetupAudio()
         {
             if (audioSource != null)
@@ -76,8 +80,10 @@ namespace SneakyGame.AI
             }
         }
 
+        // Remove zombie from global list when despawned
         public override void OnNetworkDespawn() { if (IsServer) allZombies.Remove(this); base.OnNetworkDespawn(); }
 
+        // Main AI loop: handle freeze state, detect players, execute behavior, apply flocking
         private void Update()
         {
             if (!IsServer) return;
@@ -89,6 +95,7 @@ namespace SneakyGame.AI
             UpdateAudioBasedOnState();
         }
 
+        // Play idle groans when searching, chase sounds when chasing
         private void UpdateAudioBasedOnState()
         {
             // Idle sounds while searching
@@ -113,6 +120,7 @@ namespace SneakyGame.AI
             }
         }
 
+        // Apply flocking forces to adjust NavMesh destination for coordinated horde movement
         private void ApplyFlocking()
         {
             if (agent.hasPath && agent.velocity.magnitude > 0.1f) velocity = agent.velocity;
@@ -120,12 +128,14 @@ namespace SneakyGame.AI
             if (flockingForce.magnitude > 0.1f && agent.hasPath) { Vector3 adjustedDestination = agent.destination + flockingForce * Time.deltaTime; NavMeshHit hit; if (NavMesh.SamplePosition(adjustedDestination, out hit, 5f, NavMesh.AllAreas)) agent.SetDestination(hit.position); }
         }
 
+        // Wander and search for players; switch to chase if detected
         private void SearchBehavior(Transform detected)
         {
             if (detected != null) { currentState = ZombieState.Chasing; targetPlayer = detected; lastKnownPlayerPosition = detected.position; if (!hasSeenPlayerBefore) { hasSeenPlayerBefore = true; PlayZombieScreamClientRpc(); } AlertAllZombies(detected.position); UpdateSpeed(); Debug.Log($"{name} FOUND PLAYER! Switching to CHASE mode"); return; }
             if (!agent.hasPath || agent.remainingDistance < 2f) { searchTimer -= Time.deltaTime; if (searchTimer <= 0f) PickNewSearchPosition(); }
         }
 
+        // Investigate last known player position; switch to chase if spotted
         private void AlertedBehavior(Transform detected)
         {
             if (detected != null) { currentState = ZombieState.Chasing; targetPlayer = detected; lastKnownPlayerPosition = detected.position; UpdateSpeed(); Debug.Log($"{name} spotted player while alerted! Switching to CHASE"); return; }
@@ -133,12 +143,14 @@ namespace SneakyGame.AI
             else agent.SetDestination(lastKnownPlayerPosition);
         }
 
+        // Chase player with flanking tactics; return to search if target lost
         private void ChasingBehavior(Transform detected)
         {
             if (detected != null) { targetPlayer = detected; lastKnownPlayerPosition = detected.position; flankTimer -= Time.deltaTime; if (flankTimer <= 0f) { CalculateFlankPosition(detected.position); flankTimer = flankUpdateInterval; } float distance = Vector3.Distance(transform.position, detected.position); if (distance > 5f && Random.value > 0.7f) agent.SetDestination(flankPosition); else agent.SetDestination(PredictPlayerPosition(detected)); }
             else { float distance = Vector3.Distance(transform.position, lastKnownPlayerPosition); if (distance > loseTargetRadius) { currentState = ZombieState.Searching; targetPlayer = null; PickNewSearchPosition(); UpdateSpeed(); Debug.Log($"{name} lost player completely. Returning to SEARCH mode"); } else agent.SetDestination(lastKnownPlayerPosition); }
         }
 
+        // Distribute zombies in sectors to cover more area during search
         private void PickNewSearchPosition()
         {
             int zombieIndex = allZombies.IndexOf(this);
@@ -151,9 +163,12 @@ namespace SneakyGame.AI
             if (NavMesh.SamplePosition(targetPos, out hit, searchRadius, NavMesh.AllAreas)) { searchPosition = hit.position; agent.SetDestination(searchPosition); searchTimer = searchWaitTime; Debug.Log($"{name} picked new search position in sector {zombieIndex}"); }
         }
 
+        // Adjust movement speed based on frozen state and AI state
         private void UpdateSpeed() { if (isFrozen.Value) agent.speed = frozenSpeed; else if (currentState == ZombieState.Chasing || currentState == ZombieState.Alerted) agent.speed = alertedSpeed; else agent.speed = normalSpeed; }
+        // Placeholder for visual state feedback (currently unused)
         private void UpdateColorBasedOnState() { return; }
 
+        // Detect players using vision and hearing; prioritize by distance and noise
         private Transform DetectPlayerWithSenses()
         {
             var players = FindObjectsOfType<Game.PlayerState>().Where(p => p.CompareTag("Player") && !p.IsInfected.Value).ToArray();
@@ -174,6 +189,7 @@ namespace SneakyGame.AI
             return bestTarget;
         }
 
+        // Check if player is within vision cone and line of sight
         private bool CanSeePlayer(Transform player, float distance)
         {
             if (distance > visionRadius) return false;
@@ -186,8 +202,10 @@ namespace SneakyGame.AI
             return true;
         }
 
+        // Predict where player will be based on velocity
         private Vector3 PredictPlayerPosition(Transform player) { if (player.TryGetComponent<Rigidbody>(out var rb) && rb.linearVelocity.magnitude > 0.1f) return player.position + rb.linearVelocity * 1f; return player.position; }
 
+        // Calculate flanking position to surround player from different angles
         private void CalculateFlankPosition(Vector3 playerPos)
         {
             var nearbyZombies = allZombies.Where(z => z != this && Vector3.Distance(z.transform.position, playerPos) < 20f).ToList();
@@ -197,10 +215,13 @@ namespace SneakyGame.AI
             if (NavMesh.SamplePosition(flankPosition, out hit, 10f, NavMesh.AllAreas)) flankPosition = hit.position;
         }
 
+        // Alert all searching zombies to player's location
         private void AlertAllZombies(Vector3 playerPosition) { foreach (var zombie in allZombies) if (zombie != this && zombie.currentState == ZombieState.Searching) zombie.AlertToPosition(playerPosition); Debug.Log($"Alerted zombies to player at position {playerPosition}"); }
 
+        // Receive alert from another zombie about player location
         public void AlertToPosition(Vector3 position) { if (!IsServer) return; currentState = ZombieState.Alerted; lastKnownPlayerPosition = position; UpdateSpeed(); PlayZombieResponseClientRpc(); Debug.Log($"{name} was alerted to position {position}"); }
 
+        // Play aggressive scream when spotting player for first time
         [ClientRpc]
         private void PlayZombieScreamClientRpc()
         {
@@ -216,6 +237,7 @@ namespace SneakyGame.AI
             }
         }
 
+        // Play response groan when alerted by another zombie
         [ClientRpc]
         private void PlayZombieResponseClientRpc()
         {
@@ -231,6 +253,7 @@ namespace SneakyGame.AI
             }
         }
 
+        // Play quiet idle groan while wandering
         [ClientRpc]
         private void PlayIdleGroanClientRpc()
         {
@@ -244,6 +267,7 @@ namespace SneakyGame.AI
             }
         }
 
+        // Play loud aggressive sound while chasing player
         [ClientRpc]
         private void PlayChaseGroanClientRpc()
         {
@@ -258,11 +282,15 @@ namespace SneakyGame.AI
             }
         }
 
+        // Temporarily slow down zombie for specified duration
         public void FreezeZombie(float duration) { if (!IsServer) return; isFrozen.Value = true; freezeTimer = duration; agent.speed = frozenSpeed; UpdateColor(); }
+        // Placeholder for visual freeze effect (currently unused)
         private void UpdateColor() { return; }
 
+        // Combine separation, alignment, and cohesion into final flocking force
         private Vector3 CalculateFlockingForce() { if (allZombies.Count <= 1) return Vector3.zero; Vector3 separation = Separation(); Vector3 alignment = Alignment(); Vector3 cohesion = Cohesion(); return (separation + alignment + cohesion) * flockingWeight; }
 
+        // Calculate force to push away from nearby zombies
         private Vector3 Separation()
         {
             Vector3 steer = Vector3.zero;
@@ -272,6 +300,7 @@ namespace SneakyGame.AI
             return steer;
         }
 
+        // Calculate force to match velocity with nearby zombies
         private Vector3 Alignment()
         {
             Vector3 avg = Vector3.zero;
@@ -281,6 +310,7 @@ namespace SneakyGame.AI
             return Vector3.zero;
         }
 
+        // Calculate force to move toward center of nearby zombie group
         private Vector3 Cohesion()
         {
             Vector3 center = Vector3.zero;
@@ -290,6 +320,7 @@ namespace SneakyGame.AI
             return Vector3.zero;
         }
 
+        // Visualize detection radii in Unity editor
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.yellow; Gizmos.DrawWireSphere(transform.position, visionRadius);
