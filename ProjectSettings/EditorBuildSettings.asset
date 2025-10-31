@@ -11,6 +11,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/GameScene.unity
     guid: 91ebf1eb3a520534c92f1617e03f934d
+  - enabled: 1
+    path: Assets/zombie.unity
+    guid: e42e542de06a6419a86f2d529d4212d3
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

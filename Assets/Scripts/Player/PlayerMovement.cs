@@ -30,6 +30,7 @@ namespace SneakyGame.Player
         private Vector2 moveInput;
         private bool isCrouching;
         private bool isSprinting;
+        private float verticalVelocity;
         private NetworkVariable<Vector3> networkPosition = new NetworkVariable<Vector3>();
         private NetworkVariable<Quaternion> networkRotation = new NetworkVariable<Quaternion>();
         private void Awake() => characterController = GetComponent<CharacterController>();
@@ -59,8 +60,8 @@ namespace SneakyGame.Player
 
             if (spawnPoints.Length == 0)
             {
-                Debug.LogWarning("[PlayerMovement] No spawn points found! Spawning at elevated position");
-                SetSpawnPosition(new Vector3(0, 2, 0));
+                Debug.LogWarning("[PlayerMovement] No spawn points found! Spawning at origin");
+                SetSpawnPosition(new Vector3(0, 0, 0));
                 return;
             }
 
@@ -68,9 +69,7 @@ namespace SneakyGame.Player
             int randomIndex = UnityEngine.Random.Range(0, spawnPoints.Length);
             Vector3 spawnPos = spawnPoints[randomIndex].transform.position;
 
-            // Elevate spawn position above ground
-            spawnPos.y = 2f; // Spawn 2 units above ground, let physics settle
-
+            // Use spawn point position as-is (spawn points should be at ground level)
             SetSpawnPosition(spawnPos);
 
             Debug.Log($"[PlayerMovement] Positioned player at spawn point {randomIndex}: {spawnPos}");
@@ -122,6 +121,13 @@ namespace SneakyGame.Player
         }
         private void HandleMovement()
         {
+            // Camera might not be initialized yet, try to get it
+            if (cameraTransform == null)
+            {
+                cameraTransform = Camera.main?.transform;
+                if (cameraTransform == null) return; // Still no camera, skip movement this frame
+            }
+
             Vector3 forward = cameraTransform.forward;
             Vector3 right = cameraTransform.right;
             forward.y = 0;
@@ -142,8 +148,21 @@ namespace SneakyGame.Player
                 noiseLevel = sprintNoiseLevel;
             }
             UpdateNoiseLevelServerRpc(moveInput.magnitude > 0.1f ? noiseLevel : 0f);
+
+            // Apply gravity
+            if (characterController.isGrounded)
+            {
+                // Reset vertical velocity when grounded
+                verticalVelocity = -2f; // Small downward force to keep grounded
+            }
+            else
+            {
+                // Apply gravity when in air
+                verticalVelocity -= 20f * Time.deltaTime; // Stronger gravity
+            }
+
             Vector3 movement = moveDirection * currentSpeed * Time.deltaTime;
-            movement.y = -9.81f * Time.deltaTime;
+            movement.y = verticalVelocity * Time.deltaTime;
             characterController.Move(movement);
         }
         [ServerRpc]
